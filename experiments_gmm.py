@@ -20,7 +20,7 @@ spsa_beta = lambda x: 15. / (x ** (spsa_gamma / 4))
 # spsa_beta = lambda x: 0.001
 
 clustering = spsa_clustering.ClusteringSPSA(n_clusters=clust_means.shape[0], data_shape=2, Gammas=None, alpha=spsa_alpha,
-                                            beta=spsa_beta, norm_init=False, eta=1000)
+                                            beta=spsa_beta, norm_init=False, eta=700)
 
 for _ in range(N):
     mix_ind = np.random.choice(len(mix_prob), p=mix_prob)
@@ -62,6 +62,9 @@ print('\n')
 for i in range(clust_means.shape[0]):
     print('SPSA clustering covar matrix distance {0}: {1:f}'.format(i,
                                                         np.linalg.norm(clust_gammas[i] - clustering.Gammas[i])))
+
+utils.plot_centers(clust_means, clustering)
+utils.plot_centers_converg(clust_means, clustering)
 
 utils.plot_clustering_cov(data_set, clustering.labels_, 'SPSA clustering partition', clustering.cluster_centers_,
                           clustering.Gammas)

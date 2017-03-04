@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.spatial.distance import euclidean, mahalanobis
+from scipy.spatial.distance import mahalanobis
 
 
 class Noise(object):

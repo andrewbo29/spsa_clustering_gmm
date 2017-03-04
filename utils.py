@@ -43,7 +43,9 @@ def plot_centers_converg(true_centers, clust):
 
     sns.set_style("darkgrid")
     plt.figure()
-    plt.plot(conv, '--', linewidth=3)
+    plt.plot(conv[:, 0], '--', linewidth=3)
+    plt.plot(conv[:, 1], '-.', linewidth=3)
+    plt.plot(conv[:, 2], ':', linewidth=3)
     plt.legend(['Centroid %d' % (i + 1) for i in range(len(true_centers))])
     plt.xlabel('Iterations')
     plt.ylabel('Error norm')
