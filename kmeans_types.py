@@ -130,12 +130,9 @@ class KMeansClassic(KMeansClustering):
                 iter_num += 1
             else:
                 print('     Empty cluster')
-        best_ind = np.argmin([fit_steps[i][1] for i in range(self.n_init)])
-        # print('Best k-means inter-clusters distance: %.2f' % 
-        #     fit_steps[best_ind][1])
-
-        self.cluster_centers_ = fit_steps[best_ind][0]
-        super(KMeansClassic, self).clusters_fill(data)
+        # best_ind = np.argmin([fit_steps[i][1] for i in range(self.n_init)])
+        # self.cluster_centers_ = fit_steps[best_ind][0]
+        # super(KMeansClassic, self).clusters_fill(data)
 
 
 # class KMeansSPSA(KMeansClustering):

@@ -72,3 +72,5 @@ utils.plot_clustering_cov(data_set, true_labels, 'True partition', clust_means, 
 utils.plot_clustering_cov(data_set, labels_pred_gmm, 'GMM partition', gmm.means_, gmm.covariances_)
 utils.plot_clustering_cov(data_set, labels_pred_bgmm, 'Bayesian GMM partition', bgmm.means_, bgmm.covariances_)
 plt.show()
+
+

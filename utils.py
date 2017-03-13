@@ -122,3 +122,7 @@ def plot_mnist(df):
         plt.xticks([])
         plt.yticks([])
     plt.tight_layout()
+
+
+def mean_sq_dist(true_centers, pred_centers):
+    return np.mean(np.sqrt(np.sum((true_centers - pred_centers) ** 2, axis=1)))

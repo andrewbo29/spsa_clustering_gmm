@@ -5,6 +5,8 @@ import utils
 import kmeans_types
 import spsa_clustering
 
+import gmm_clustering
+
 
 N = 5000
 mix_prob = np.array([0.4, 0.4, 0.2])
@@ -14,18 +16,18 @@ data_set = []
 true_labels = []
 
 noise_0 = spsa_clustering.Noise(func=lambda x: 0, name='0')
-noise_1 = spsa_clustering.Noise(func=lambda x: np.random.normal(), name='$\mathcal{N}(0,1)$')
-noise_2 = spsa_clustering.Noise(func=lambda x: np.random.normal(0., 2.),
+noise_1 = spsa_clustering.Noise(func=lambda x: np.random.normal(size=x.shape[0]), name='$\mathcal{N}(0,1)$')
+noise_2 = spsa_clustering.Noise(func=lambda x: np.random.normal(0., 2., size=x.shape[0]),
                 name='$\mathcal{N}(0,\sqrt{2})$')
-noise_3 = spsa_clustering.Noise(func=lambda x: np.random.normal(1., 1.),
+noise_3 = spsa_clustering.Noise(func=lambda x: np.random.normal(1., 1., size=x.shape[0]),
                 name='$\mathcal{N}(1,1)$')
-noise_4 = spsa_clustering.Noise(func=lambda x: np.random.normal(1., 2.),
+noise_4 = spsa_clustering.Noise(func=lambda x: np.random.normal(1., 2., size=x.shape[0]),
                 name='$\mathcal{N}(1,\sqrt{2})$')
-noise_5 = spsa_clustering.Noise(func=lambda x: 10 * (np.random.rand() * 4 - 2),
+noise_5 = spsa_clustering.Noise(func=lambda x: 10 * (np.random.rand(x.shape[0]) * 4 - 2),
                 name='random')
-noise_6 = spsa_clustering.Noise(func=lambda x: 0.1 * np.sin(x) + 19 * np.sign(50 - x % 100),
+noise_6 = spsa_clustering.Noise(func=lambda x: 0.1 * np.sin(np.arange(x.shape[0])+1) + 19 * np.sign(50 - (np.arange(x.shape[0])+1) % 100),
                 name='irregular')
-noise_7 = spsa_clustering.Noise(func=lambda x: 20, name='constant')
+noise_7 = spsa_clustering.Noise(func=lambda x: [20]*x.shape[0], name='constant')
 
 experiment_noise = noise_3
 
@@ -62,12 +64,20 @@ clustering_cov.clusters_fill(data_set)
 kmeans = kmeans_types.KMeansClassic(n_clusters=clust_means.shape[0], n_init=1, kmeans_pp=False, noise=experiment_noise)
 kmeans.fit(data_set)
 
+gmm = gmm_clustering.GMM(k=3, noise=experiment_noise)
+gmm.fit_EM(data_set, max_iters=50)
+gmm_predict = []
+for data_point in data_set:
+    gmm_predict.append(np.argmax(gmm.predict(data_point)))
+
 ari_kmeans = metrics.adjusted_rand_score(true_labels, kmeans.labels_)
 print('\nARI k-means: {:f}'.format(ari_kmeans))
 ari_spsa = metrics.adjusted_rand_score(true_labels, clustering.labels_)
 print('ARI SPSA clustering: {:f}'.format(ari_spsa))
 ari_spsa_cov = metrics.adjusted_rand_score(true_labels, clustering_cov.labels_)
 print('ARI SPSA covariance clustering: {:f}'.format(ari_spsa_cov))
+ari_gmm = metrics.adjusted_rand_score(true_labels, gmm_predict)
+print('ARI GMM: {:f}'.format(ari_gmm))
 
 utils.plot_clustering(data_set, clustering.labels_, 'SPSA clustering partition with {0} noise'.format(clustering.noise))
 utils.plot_clustering(data_set, true_labels, 'True partition')

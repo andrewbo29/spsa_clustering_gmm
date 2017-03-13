@@ -3,6 +3,7 @@ from sklearn import metrics
 import utils
 import kmeans_types
 import spsa_clustering
+import gmm_clustering
 
 
 N = 5000
@@ -26,6 +27,21 @@ noise_7 = spsa_clustering.Noise(func=lambda x: 20, name='constant')
 
 noises = [noise_1, noise_2, noise_3, noise_4, noise_5, noise_6, noise_7]
 
+noise_1_mul = spsa_clustering.Noise(func=lambda x: np.random.normal(size=x.shape[0]), name='$\mathcal{N}(0,1)$')
+noise_2_mul = spsa_clustering.Noise(func=lambda x: np.random.normal(0., 2., size=x.shape[0]),
+                name='$\mathcal{N}(0,\sqrt{2})$')
+noise_3_mul = spsa_clustering.Noise(func=lambda x: np.random.normal(1., 1., size=x.shape[0]),
+                name='$\mathcal{N}(1,1)$')
+noise_4_mul = spsa_clustering.Noise(func=lambda x: np.random.normal(1., 2., size=x.shape[0]),
+                name='$\mathcal{N}(1,\sqrt{2})$')
+noise_5_mul = spsa_clustering.Noise(func=lambda x: 10 * (np.random.rand(x.shape[0]) * 4 - 2),
+                name='random')
+noise_6_mul = spsa_clustering.Noise(func=lambda x: 0.1 * np.sin(np.arange(x.shape[0])+1) + 19 * np.sign(50 - (np.arange(x.shape[0])+1) % 100),
+                name='irregular')
+noise_7_mul = spsa_clustering.Noise(func=lambda x: [20]*x.shape[0], name='constant')
+
+noises_mul = [noise_1_mul, noise_2_mul, noise_3_mul, noise_4_mul, noise_5_mul, noise_6_mul, noise_7_mul]
+
 spsa_gamma = 1. / 6
 spsa_alpha = lambda x: 0.25 / (x ** spsa_gamma)
 spsa_beta = lambda x: 15. / (x ** (spsa_gamma / 4))
@@ -33,22 +49,30 @@ spsa_beta = lambda x: 15. / (x ** (spsa_gamma / 4))
 # spsa_alpha = lambda x: 0.001
 # spsa_beta = lambda x: 0.001
 
-clustering = spsa_clustering.ClusteringSPSA(n_clusters=clust_means.shape[0], data_shape=2, Gammas=None, alpha=spsa_alpha,
-                                            beta=spsa_beta, norm_init=False, verbose=False)
-
 n_run = 10
 
-for j in range(2, len(noises)):
+for j in range(5, len(noises)):
     ari_kmeans = np.zeros(n_run)
     ari_spsa = np.zeros(n_run)
     ari_spsa_cov = np.zeros(n_run)
+    ari_gmm = np.zeros(n_run)
 
-    clustering_cov = spsa_clustering.ClusteringSPSA(n_clusters=clust_means.shape[0], data_shape=2, Gammas=None,
-                                                    alpha=spsa_alpha,
-                                                    beta=spsa_beta, norm_init=False, noise=noises[j],
-                                                    eta=1000, verbose=False)
+    centers_dist_kmeans = np.zeros(n_run)
+    centers_dist_spsa = np.zeros(n_run)
+    centers_dist_spsa_cov = np.zeros(n_run)
+    centers_dist_gmm = np.zeros(n_run)
+
     for i in range(n_run):
         print('Run {0}'.format(i))
+
+        clustering = spsa_clustering.ClusteringSPSA(n_clusters=clust_means.shape[0], data_shape=2, Gammas=None,
+                                                    alpha=spsa_alpha,
+                                                    beta=spsa_beta, norm_init=False, verbose=False, noise=noises[j])
+
+        clustering_cov = spsa_clustering.ClusteringSPSA(n_clusters=clust_means.shape[0], data_shape=2, Gammas=None,
+                                                        alpha=spsa_alpha,
+                                                        beta=spsa_beta, norm_init=False, noise=noises[j],
+                                                        eta=3000, verbose=False)
 
         data_set = []
         true_labels = []
@@ -66,13 +90,31 @@ for j in range(2, len(noises)):
         clustering_cov.clusters_fill(data_set)
 
         kmeans = kmeans_types.KMeansClassic(n_clusters=clust_means.shape[0], n_init=1, kmeans_pp=False,
-                                            noise=noises[j], verbose=False, max_iter=100)
+                                            noise=noises[j], verbose=False, max_iter=50)
         kmeans.fit(data_set)
+
+        gmm = gmm_clustering.GMM(k=3, noise=noises_mul[j])
+        gmm.fit_EM(data_set, max_iters=100)
+        gmm_predict = []
+        for data_point in data_set:
+            gmm_predict.append(np.argmax(gmm.predict(data_point)))
 
         ari_kmeans[i] = metrics.adjusted_rand_score(true_labels, kmeans.labels_)
         ari_spsa[i] = metrics.adjusted_rand_score(true_labels, clustering.labels_)
         ari_spsa_cov[i] = metrics.adjusted_rand_score(true_labels, clustering_cov.labels_)
+        ari_gmm[i] = metrics.adjusted_rand_score(true_labels, gmm_predict)
+
+        centers_dist_kmeans[i] = utils.mean_sq_dist(clust_means, kmeans.cluster_centers_)
+        centers_dist_spsa[i] = utils.mean_sq_dist(clust_means, clustering.cluster_centers_)
+        centers_dist_spsa_cov[i] = utils.mean_sq_dist(clust_means, clustering_cov.cluster_centers_)
+        centers_dist_gmm[i] = utils.mean_sq_dist(clust_means, gmm.params.mu)
 
     print('\nMean ARI k-means with noise {0}: {1:f}'.format(noises[j], ari_kmeans.mean()))
     print('Mean ARI SPSA clustering with noise {0}: {1:f}'.format(noises[j], ari_spsa.mean()))
     print('Mean ARI SPSA covariance clustering with noise {0}: {1:f}'.format(noises[j], ari_spsa_cov.mean()))
+    print('Mean ARI EM with noise {0}: {1:f}'.format(noises_mul[j], ari_gmm.mean()))
+
+    print('\nMean centers dist k-means with noise {0}: {1:f}'.format(noises[j], centers_dist_kmeans.mean()))
+    print('Mean centers dist SPSA clustering with noise {0}: {1:f}'.format(noises[j], centers_dist_spsa.mean()))
+    print('Mean centers dist SPSA covariance clustering with noise {0}: {1:f}'.format(noises[j], centers_dist_spsa_cov.mean()))
+    print('Mean centers dist EM with noise {0}: {1:f}'.format(noises_mul[j], centers_dist_gmm.mean()))

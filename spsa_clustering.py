@@ -107,8 +107,8 @@ class ClusteringSPSA(object):
 
     def cluster_decision(self, point):
         return np.argmin(
-                [mahalanobis(point, self.cluster_centers_[label], self.Gammas_inv[label]) for label in
-                 range(self.n_clusters)])
+                [mahalanobis(point, self.cluster_centers_[label], self.Gammas_inv[label])
+                 for label in range(self.n_clusters)])
 
     def clusters_fill(self, data):
         self.Gammas_inv = [np.linalg.inv(self.Gammas[label]) for label in range(self.n_clusters)]
