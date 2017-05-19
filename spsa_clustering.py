@@ -30,7 +30,7 @@ class ClusteringSPSA(object):
         self.norm_init = norm_init
         self.noise = noise
         self.eta = eta
-        self.cluster_centers_list = []
+        # self.cluster_centers_list = []
         self.iteration_num = 1
         self.verbose = verbose
 
@@ -47,7 +47,7 @@ class ClusteringSPSA(object):
             if self.iteration_num == 1:
                 self.cluster_centers_ = np.random.multivariate_normal(np.zeros(w.shape[0]), np.eye(w.shape[0]),
                                                                       size=self.n_clusters)
-                self.cluster_centers_list.append(self.cluster_centers_.copy())
+                # self.cluster_centers_list.append(self.cluster_centers_.copy())
             self.fit_step(w)
         else:
             if self.iteration_num <= self.n_clusters:
@@ -55,7 +55,7 @@ class ClusteringSPSA(object):
             else:
                 if self.iteration_num == self.n_clusters + 1:
                     self.cluster_centers_ = np.array(self.cluster_centers_)
-                    self.cluster_centers_list.append(self.cluster_centers_.copy())
+                    # self.cluster_centers_list.append(self.cluster_centers_.copy())
                 self.fit_step(w)
 
         self.iteration_num += 1
@@ -103,7 +103,7 @@ class ClusteringSPSA(object):
 
         self.cluster_centers_ -= j_vec_dot_delta_t * np.dot(alpha_n * (y_plus - y_minus) / (2. * beta_n), j_vec)
 
-        self.cluster_centers_list.append(self.cluster_centers_.copy())
+        # self.cluster_centers_list.append(self.cluster_centers_.copy())
 
     def cluster_decision(self, point):
         return np.argmin(
