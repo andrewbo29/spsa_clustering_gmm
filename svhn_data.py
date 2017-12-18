@@ -72,11 +72,14 @@ class SVHNData(object):
 
     def generate(self, split):
         if split == 'train':
-            for i in range(self.train.data.shape[0]):
+            perm = np.random.permutation(self.train.data.shape[0])
+            for i in perm:
                 yield ([self.normalize(patch) for patch in self.get_img_patches(self.train_gray[i])], self.train_labels[i])
         elif split == 'test':
+            # print(self.test.data.shape[0])
             for i in range(self.test.data.shape[0]):
-                yield [self.normalize(patch) for patch in self.get_img_patches(self.test_gray[i])], self.test_labels[i]
+                # print(i)
+                yield ([self.normalize(patch) for patch in self.get_img_patches(self.test_gray[i])], self.test_labels[i])
 
     def save_example(self):
         ind = np.random.randint(0, self.train.data.shape[0])
