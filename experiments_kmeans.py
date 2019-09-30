@@ -48,13 +48,15 @@ print('ARI online k-means: {:f}'.format(ari_mb_kmeans))
 ari_spsa = metrics.adjusted_rand_score(true_labels, clustering.labels_)
 print('ARI SPSA clustering: {:f}'.format(ari_spsa))
 
+plt.style.use('grayscale')
+
 utils.plot_centers(clust_means, clustering)
 utils.plot_centers_converg(clust_means, clustering)
 
-utils.plot_clustering(data_set, clustering.labels_, 'SPSA clustering partition')
-utils.plot_clustering(data_set, true_labels, 'True partition')
-utils.plot_clustering(data_set, labels_pred_kmenas, 'K-means partition')
-utils.plot_clustering(data_set, labels_pred_mb_kmeans, 'Online k-means partition')
+# utils.plot_clustering(data_set, clustering.labels_, 'SPSA clustering partition')
+# utils.plot_clustering(data_set, true_labels, 'True partition')
+# utils.plot_clustering(data_set, labels_pred_kmenas, 'K-means partition')
+# utils.plot_clustering(data_set, labels_pred_mb_kmeans, 'Online k-means partition')
 
 plt.show()
 

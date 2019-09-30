@@ -20,7 +20,7 @@ spsa_beta = lambda x: 15. / (x ** (spsa_gamma / 4))
 # spsa_beta = lambda x: 0.001
 
 clustering = spsa_clustering.ClusteringSPSA(n_clusters=clust_means.shape[0], data_shape=2, Gammas=None, alpha=spsa_alpha,
-                                            beta=spsa_beta, norm_init=False, eta=700)
+                                            beta=spsa_beta, norm_init=False, eta=1000)
 
 for _ in range(N):
     mix_ind = np.random.choice(len(mix_prob), p=mix_prob)
@@ -63,14 +63,17 @@ for i in range(clust_means.shape[0]):
     print('SPSA clustering covar matrix distance {0}: {1:f}'.format(i,
                                                         np.linalg.norm(clust_gammas[i] - clustering.Gammas[i])))
 
+plt.style.use('grayscale')
+
 utils.plot_centers(clust_means, clustering)
 utils.plot_centers_converg(clust_means, clustering)
 
-utils.plot_clustering_cov(data_set, clustering.labels_, 'SPSA clustering partition', clustering.cluster_centers_,
-                          clustering.Gammas)
-utils.plot_clustering_cov(data_set, true_labels, 'True partition', clust_means, clust_gammas)
-utils.plot_clustering_cov(data_set, labels_pred_gmm, 'GMM partition', gmm.means_, gmm.covariances_)
-utils.plot_clustering_cov(data_set, labels_pred_bgmm, 'Bayesian GMM partition', bgmm.means_, bgmm.covariances_)
+# utils.plot_clustering_cov(data_set, clustering.labels_, 'SPSA clustering partition', clustering.cluster_centers_,
+#                           clustering.Gammas)
+# utils.plot_clustering_cov(data_set, true_labels, 'True partition', clust_means, clust_gammas)
+# utils.plot_clustering_cov(data_set, labels_pred_gmm, 'GMM partition', gmm.means_, gmm.covariances_)
+# utils.plot_clustering_cov(data_set, labels_pred_bgmm, 'Bayesian GMM partition', bgmm.means_, bgmm.covariances_)
+
 plt.show()
 
 

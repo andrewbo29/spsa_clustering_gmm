@@ -1,10 +1,14 @@
 # coding=utf-8
 import sys, os, pickle
+from datetime import datetime
+
 from scipy.stats import cauchy, halfcauchy
 import numpy as np
-from sklearn import metrics
+from sklearn import metrics, cluster
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+import pam
+from sklearn.metrics.pairwise import pairwise_distances
 
 import spsa_clustering
 import utils
@@ -43,16 +47,30 @@ def stat():
     # spsa_alpha = lambda x: 0.001
     # spsa_beta = lambda x: 0.001
 
-    n_run = 100
+    n_run = 10
     N = 3000
+
     ari_spsa = np.zeros(n_run)
+    ari_kmeans = np.zeros(n_run)
+    ari_mb_kmeans = np.zeros(n_run)
+    ari_pam = np.zeros(n_run)
+
     cent_dist = np.zeros(n_run)
+    cent_dist_kmeans = np.zeros(n_run)
+    cent_dist_mb_kmeans = np.zeros(n_run)
+    cent_dist_pam = np.zeros(n_run)
 
     for i in tqdm(range(n_run)):
         clustering = spsa_clustering.ClusteringSPSA(n_clusters=clust_num, data_shape=data_shape, Gammas=None,
                                                     alpha=spsa_alpha,
                                                     beta=spsa_beta, norm_init=False, verbose=False, sparse=True, eta=700,
                                                     spsa_sigma=False)
+
+        kmeans = cluster.KMeans(n_clusters=clust_num)
+        mb_kmeans = cluster.MiniBatchKMeans(n_clusters=clust_num, n_init=1, init='random', max_iter=1,
+                                            batch_size=1,
+                                            max_no_improvement=None)
+
         data_set = []
         true_labels = []
         for _ in range(N):
@@ -60,17 +78,37 @@ def stat():
             data_point = np.random.multivariate_normal(mu_list[mix_ind], np.identity(data_shape) * sigma_list[mix_ind])
             data_set.append(data_point)
             true_labels.append(mix_ind)
-            clustering.fit(data_point)
+            # clustering.fit(data_point)
         data_set = np.array(data_set)
 
         # utils.order_clust_centers(np.array(mu_list), clustering)
 
-        clustering.clusters_fill(data_set)
+        # clustering.clusters_fill(data_set)
 
-        ari_spsa[i] = metrics.adjusted_rand_score(true_labels, clustering.labels_)
-        cent_dist[i] = utils.mean_cent_dist(np.array(mu_list), clustering)
+        labels_pred_kmenas = kmeans.fit_predict(data_set)
+        labels_pred_mb_kmeans = mb_kmeans.fit_predict(data_set)
+
+        dist = pairwise_distances(data_set)
+        labels_pred_pam, pam_med = pam.cluster(dist, k=clust_num)
+
+        # ari_spsa[i] = metrics.adjusted_rand_score(true_labels, clustering.labels_)
+        # cent_dist[i] = utils.mean_cent_dist(np.array(mu_list), clustering)
+
+        ari_kmeans[i] = metrics.adjusted_rand_score(true_labels, labels_pred_kmenas)
+        ari_mb_kmeans[i] = metrics.adjusted_rand_score(true_labels, labels_pred_mb_kmeans)
+        ari_pam[i] = metrics.adjusted_rand_score(true_labels, labels_pred_pam)
+
+        cent_dist_kmeans[i] = utils.mean_cent_dist_(np.array(mu_list), kmeans.cluster_centers_)
+        cent_dist_mb_kmeans[i] = utils.mean_cent_dist_(np.array(mu_list), mb_kmeans.cluster_centers_)
+        cent_dist_pam[i] = utils.mean_cent_dist_(np.array(mu_list), data_set[pam_med])
 
     print(ari_spsa.mean(), cent_dist.mean())
+
+    print('\nMean ARI k-means: {:f}, Mean L2: {:f}'.format(ari_kmeans.mean(), cent_dist_kmeans.mean()))
+    print('Mean ARI online k-means: {:f}, Mean L2: {:f}'.format(ari_mb_kmeans.mean(), cent_dist_mb_kmeans.mean()))
+    # print('Mean ARI SPSA clustering: {:f}, Mean L2: {:f}'.format(ari_spsa.mean(), cen))
+    print('\nMean ARI PAM: {:f}, Mean L2: {:f}'.format(ari_pam.mean(), cent_dist_pam.mean()))
+    # print('\nMean ARI DBSCAN: {:f}'.format(ari_dbscan.mean()))
 
 
 def main():
@@ -149,7 +187,7 @@ def load_experiment(name='bad'):
 
     clustering = spsa_clustering.ClusteringSPSA(n_clusters=clust_num, data_shape=data_shape, Gammas=None,
                                                 alpha=spsa_alpha,
-                                                beta=spsa_beta, norm_init=False, verbose=False, sparse=True, eta=700,
+                                                beta=spsa_beta, norm_init=False, verbose=False, sparse=False, eta=None,
                                                 spsa_sigma=False)
 
     rand_ind = np.random.permutation(data_set.shape[0])
@@ -166,13 +204,13 @@ def load_experiment(name='bad'):
     print('Mean centers dist: {}'.format(utils.mean_cent_dist(np.array(mu_list), clustering)))
 
     utils.plot_centers(np.array(mu_list), clustering)
-    utils.plot_centers_converg(np.array(mu_list), clustering)
+    # utils.plot_centers_converg(np.array(mu_list), clustering)
 
-    utils.plot_clustering(data_set[rand_ind], clustering.labels_, 'SPSA clustering partition')
-    utils.plot_clustering(data_set[rand_ind], true_labels[rand_ind], 'True partition')
+    # utils.plot_clustering(data_set[rand_ind], clustering.labels_, 'SPSA clustering partition')
+    # utils.plot_clustering(data_set[rand_ind], true_labels[rand_ind], 'True partition')
 
-    for Gamma in clustering.Gammas:
-        print(Gamma)
+    # for Gamma in clustering.Gammas:
+    #     print(Gamma)
 
     # for center in clustering.cluster_centers_:
     #     print(center)
@@ -186,4 +224,5 @@ def load_experiment(name='bad'):
 if __name__ == '__main__':
     # sys.exit(main())
     # sys.exit(stat())
-    sys.exit(load_experiment('good'))
+    # plt.style.use('grayscale')
+    sys.exit(load_experiment('ugly'))

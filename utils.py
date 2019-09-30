@@ -10,15 +10,23 @@ from scipy.stats import cauchy, halfcauchy
 
 
 COLORS = ['navy', 'darkgreen', 'darkred']
+sns.set_style("whitegrid")
 
 
 def plot_clustering(data, partition, title):
     labels_num = len(set(partition))
-    markers = ['o', '+', 'x']
+    # markers = ['o', '+', 'x']
+    markers = ['o', '^', 'x']
     df = pd.DataFrame(dict(x=data[:, 0], y=data[:, 1], g=partition))
     g = sns.lmplot('x', 'y', data=df, hue='g', markers=markers[:labels_num], fit_reg=False, legend=False)
     g.fig.subplots_adjust(top=0.9)
     g.fig.suptitle(title, fontsize=12)
+
+    g.set(xlabel='', ylabel='')
+
+    # ax = plt.axes()
+    # ax.set_ylabel('')
+    # ax.set_xlabel('')
 
 
 def plot_clustering_cov(data, partition, title, mean, covar):
@@ -48,13 +56,16 @@ def plot_centers_converg(true_centers, clust):
     conv = np.sqrt(np.sum(((true_centers - np.array(clust.cluster_centers_list)) ** 2), axis=2))
 
     sns.set_style("darkgrid")
+    # sns.set_style("whitegrid")
     plt.figure()
-    plt.plot(conv[:, 0], '--', linewidth=3)
-    plt.plot(conv[:, 1], '-.', linewidth=3)
-    plt.plot(conv[:, 2], ':', linewidth=3)
-    plt.legend(['Centroid %d' % (i + 1) for i in range(len(true_centers))])
+    plt.plot(conv[:, 0], '--', linewidth=5)
+    plt.plot(conv[:, 1], '-.', linewidth=5)
+    plt.plot(conv[:, 2], ':', linewidth=5)
+    # plt.legend(['Centroid %d' % (i + 1) for i in range(len(true_centers))])
     plt.xlabel('Iterations')
+    # plt.xlabel('Итерация')
     plt.ylabel('Error norm')
+    # plt.ylabel('Норма оценки')
 
 
 def plot_centers(true_centers, clust):
@@ -67,13 +78,19 @@ def plot_centers(true_centers, clust):
         row_num = clust.n_clusters // col_num + 1
 
     sns.set_style("darkgrid")
+    # sns.set_style("whitegrid")
     fig = plt.figure()
     for i in range(clust.n_clusters):
         ax = fig.add_subplot(row_num, col_num, i + 1)
         ax.plot(centers[:, i, 0], centers[:, i, 1], '-.', linewidth=3, zorder=1)
-        ax.scatter(true_centers[i, 0], true_centers[i, 1], s=40, marker='s', c='r', zorder=2)
-        ax.scatter(centers[-1, i, 0], centers[-1, i, 1], s=40, marker='x', c='r', zorder=2)
+
+        # ax.scatter(true_centers[i, 0], true_centers[i, 1], s=120, marker='s', c='r', zorder=2)
+        # ax.scatter(centers[-1, i, 0], centers[-1, i, 1], s=120, marker='x', c='r', zorder=2)
+
+        ax.scatter(true_centers[i, 0], true_centers[i, 1], marker='s', c='r', zorder=2)
+        ax.scatter(centers[-1, i, 0], centers[-1, i, 1], marker='x', c='r', zorder=2)
         ax.set_title('Centroid %d' % (i + 1))
+        # ax.set_title('Центроид %d' % (i + 1))
 
     plt.subplots_adjust(hspace=0.3)
 
@@ -138,6 +155,11 @@ def mean_sq_dist(true_centers, pred_centers):
 def mean_cent_dist(true_centers, clust):
     conv = np.sqrt(np.sum(((true_centers - np.array(clust.cluster_centers_list)) ** 2), axis=2))
     return conv[-1, :].mean()
+
+
+def mean_cent_dist_(true_centers, clust):
+    conv = np.sqrt(np.sum(((true_centers - clust) ** 2), axis=1))
+    return conv.mean()
 
 
 def positive_distr(distr_func, size):
